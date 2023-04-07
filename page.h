@@ -6,5 +6,6 @@ class Page {
   int id;
   bool isLocal;
   bool isReferenced;
+  Page() {}
   Page(int _id, bool _isLocal) : id(_id), isLocal(_isLocal) {}
 };

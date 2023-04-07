@@ -7,6 +7,9 @@ using namespace std;
 #define PAGE_MIGRATION_THRESHOLD 5
 #define MAX_PAGES_TO_MIGRATE 10
 #define MAX_HOTNESS_TABLE_SIZE 500
+#define MAX_L1_CACHE_SIZE 32
+#define MAX_L2_CACHE_SIZE 256
+#define MAX_L3_CACHE_SIZE 1048
 
 class PageMigrationSimulator {
  public:
@@ -20,13 +23,51 @@ class PageMigrationSimulator {
         remoteAccessLatency(_remoteAccessLatency) {}
 
   void accessPage(int id) {
+    // Find the page in L1 cache
+    for (auto it = localMemory.L1_cache.begin(); it != localMemory.L1_cache.end();
+         it++) {
+      if (it->id == id) {
+        it->isLocal = true;
+        it->isReferenced = true;
+        return;
+      }
+    }
+    // Find the page in L2 cache
+    for (auto it = localMemory.L2_cache.begin(); it != localMemory.L2_cache.end();
+         it++) {
+      if (it->id == id) {
+        it->isLocal = true;
+        it->isReferenced = true;
+        if(localMemory.L1_cache.size() == MAX_L1_CACHE_SIZE) localMemory.L1_cache.pop_front();
+        localMemory.L1_cache.push_back(*it);
+        return;
+      }
+    }
+    // Find the page in L3 cache
+    for (auto it = localMemory.L3_cache.begin(); it != localMemory.L3_cache.end();
+         it++) {
+      if (it->id == id) {
+        it->isLocal = true;
+        it->isReferenced = true;
+        if(localMemory.L1_cache.size() == MAX_L1_CACHE_SIZE) localMemory.L1_cache.pop_front();
+        if(localMemory.L2_cache.size() == MAX_L2_CACHE_SIZE) localMemory.L2_cache.pop_front();
+        localMemory.L1_cache.push_back(*it);
+        localMemory.L2_cache.push_back(*it);
+        return;
+      }
+    }
     // Find the page in local memory
     for (auto it = localMemory.pages.begin(); it != localMemory.pages.end();
          it++) {
       if (it->id == id) {
-        // Increment the page's access count in remote memory
         it->isLocal = true;
         it->isReferenced = true;
+        if(localMemory.L1_cache.size() == MAX_L1_CACHE_SIZE) localMemory.L1_cache.pop_front();
+        if(localMemory.L2_cache.size() == MAX_L2_CACHE_SIZE) localMemory.L2_cache.pop_front();
+        if(localMemory.L3_cache.size() == MAX_L3_CACHE_SIZE) localMemory.L3_cache.pop_front();
+        localMemory.L1_cache.push_back(*it);
+        localMemory.L2_cache.push_back(*it);
+        localMemory.L3_cache.push_back(*it);
         return;
       }
     }
@@ -38,7 +79,7 @@ class PageMigrationSimulator {
         this_thread::sleep_for(chrono::milliseconds(remoteAccessLatency));
 
         if (remoteMemory.hotness.find(id) == remoteMemory.hotness.end()) {
-          // if hotness table is full, remove the least hote page
+          // if hotness table is full, remove the least hot page
           if (remoteMemory.hotness.size() == MAX_HOTNESS_TABLE_SIZE) {
             int minHotness = INT_MAX;
             for(auto& [_, hotness]: remoteMemory.hotness) {
