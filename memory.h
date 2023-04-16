@@ -14,7 +14,7 @@ class LocalMemory {
   list<Page> L2_cache;  // max 128 pages
   list<Page> L3_cache;  // max 2048 pages
   vector<Page> pages;   // local memory
-  void addPage(Page page) {
+  void addPage(Page &page) {
     if (L1_cache.size() == MAX_L1_CACHE_SIZE) L1_cache.pop_front();
     if (L2_cache.size() == MAX_L2_CACHE_SIZE) L2_cache.pop_front();
     if (L3_cache.size() == MAX_L3_CACHE_SIZE) L3_cache.pop_front();
@@ -58,9 +58,9 @@ class RemoteMemory {
  public:
   vector<Page> pages;
   map<int, Page> pageTable;
-  unordered_map<int, int> hotness;
+  unordered_map<int, double> hotness;
   unordered_map<int, unsigned long long> globalAccessCountTillLastAccess;
-  void addPage(Page page) {
+  void addPage(Page &page) {
     pages.push_back(page);
     pages[pages.size() - 1].isLocal = false;
     pages[pages.size() - 1].isReferenced = false;

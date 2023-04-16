@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <ctime>
+
 #include "page_migration.h"
 
 using namespace std;
@@ -11,16 +12,18 @@ int main() {
   PageMigrationSimulator simulator(1, 1);
   // Add some pages to local memory
   for (int i = 0; i <= 100; i++) {
-    simulator.localMemory.addPage(Page(i, false));
+    Page p = Page(i, true);
+    simulator.localMemory.addPage(p);
   }
   // Add some pages to remote memory
-  for (int i = 101; i < 10000; i++) {
-    simulator.remoteMemory.addPage(Page(i, false));
+  for (int i = 101; i < 1000; i++) {
+    Page p = Page(i, false);
+    simulator.remoteMemory.addPage(p);
   }
   // Access 1000 pages at random
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 10000; i++) {
     auto start = std::chrono::high_resolution_clock::now();
-    int page_id = rand() % 10000;
+    int page_id = rand() % 1000;
     simulator.accessPage(page_id);
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::ratio<1L, 1000L>> duration =
