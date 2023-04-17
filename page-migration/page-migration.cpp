@@ -1,28 +1,6 @@
-#include <thread>
+#include "page-migration.h";
 
-#include "memory.h"
-
-using namespace std;
-
-#define PAGE_MIGRATION_THRESHOLD 3
-#define MAX_PAGES_TO_MIGRATE 10
-#define MAX_HOTNESS_TABLE_SIZE 500
-#define MAX_L1_CACHE_SIZE 32
-#define MAX_L2_CACHE_SIZE 256
-#define MAX_L3_CACHE_SIZE 1048
-
-class PageMigrationSimulator {
- public:
-  LocalMemory localMemory;
-  RemoteMemory remoteMemory;
-  int migrationLatency;
-  int remoteAccessLatency;
-  unsigned long long globalAccessCount = 0;
-  PageMigrationSimulator(int _migrationLatency, int _remoteAccessLatency)
-      : migrationLatency(_migrationLatency),
-        remoteAccessLatency(_remoteAccessLatency) {}
-
-  void accessPage(int id) {
+void PageMigrationSimulator::accessPage(int id) {
     // Find the page in L1 cache
     for (auto it = localMemory.L1_cache.begin();
          it != localMemory.L1_cache.end(); it++) {
@@ -116,7 +94,7 @@ class PageMigrationSimulator {
     }
   }
 
-  void performMigration(vector<Page> hot_pages, vector<Page> victim_pages) {
+	void PageMigrationSimulator::performMigration(vector<Page> hot_pages, vector<Page> victim_pages) {
     int sz = min(hot_pages.size(), victim_pages.size());
     int cnt = 0;
     for (auto page : hot_pages) {
@@ -149,7 +127,7 @@ class PageMigrationSimulator {
     }
   }
 
-  vector<Page> getHotPages() {
+	vector<Page> PageMigrationSimulator::getHotPages() {
     vector<Page> hot_pages;
     for (auto& [id, hotness] : remoteMemory.hotness) {
       if (hotness >= PAGE_MIGRATION_THRESHOLD) {
@@ -160,7 +138,7 @@ class PageMigrationSimulator {
     return hot_pages;
   }
 
-  vector<Page> getVictimPages() {
+  vector<Page> PageMigrationSimulator::getVictimPages() {
     vector<Page> victim_pages;
     for (auto page : localMemory.pages) {
       if (!page.isReferenced)
@@ -171,4 +149,3 @@ class PageMigrationSimulator {
     }
     return victim_pages;
   }
-};
